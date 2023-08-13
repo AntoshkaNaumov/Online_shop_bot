@@ -12,7 +12,6 @@ async def on_startup(_):
 
 client.register_handlers_client(dp)
 admin.register_handlers_admin(dp)
-payment.register_handlers_payment(dp)
 other.register_handlers_other(dp)
 
 # Set up logging
