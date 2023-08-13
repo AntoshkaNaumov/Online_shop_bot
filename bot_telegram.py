@@ -2,7 +2,7 @@ from aiogram.utils import executor
 from create_bot import dp
 from data_base import sqlite_db
 import logging
-from handlers import client, admin, other
+from handlers import client, admin, other, payment
 
 
 async def on_startup(_):
@@ -12,6 +12,7 @@ async def on_startup(_):
 
 client.register_handlers_client(dp)
 admin.register_handlers_admin(dp)
+payment.register_handlers_payment(dp)
 other.register_handlers_other(dp)
 
 # Set up logging
