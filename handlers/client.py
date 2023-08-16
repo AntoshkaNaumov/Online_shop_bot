@@ -417,9 +417,7 @@ async def success(message: types.Message, state: FSMContext):
         # Clear the user's cart and update the state
         async with state.proxy() as data:
             data["user_cart"] = {}  # Clear the cart
-        await state.finish()
     else:
-        product_name = "Product Name"  # Replace with the actual product name
         user_username = message.from_user.username
         user_id = message.from_user.id
 
@@ -429,9 +427,20 @@ async def success(message: types.Message, state: FSMContext):
         else:
             user_mention = f"[Пользователь](tg://user?id={user_id})"
 
-        # Send a message to the group administrator with the user's mention and the product name
-        admin_notification = f"Пользователь {user_mention} совершил оплату и купил товар: {product_name}"
-        await bot.send_message(GROUP_ADMIN_ID, admin_notification)
+        # Get the purchased product name from the user_purchases dictionary
+        if user_id in user_purchases:
+            product_name = user_purchases[user_id]
+
+            # Send a message to the group administrator with the user's mention and the product name
+            admin_notification = f"Пользователь {user_mention} совершил оплату и купил товар: {product_name}"
+            await bot.send_message(GROUP_ADMIN_ID, admin_notification)
+
+            # Remove the user's entry from the user_purchases dictionary
+            del user_purchases[user_id]
+
+            await state.finish()
+        else:
+            await message.answer("Не удалось определить купленный товар. Обратитесь к администратору.")
 
 
 # Handler for "Мои заказы" button in the cart view
@@ -462,6 +471,10 @@ async def show_my_orders(message: types.Message):
 @dp.message_handler(lambda message: message.text == "Назад")
 async def go_back_to_main_menu(message: types.Message):
     await message.answer("Вы вернулись в главное меню.", reply_markup=kb_client)
+
+
+# This dictionary will store user IDs and their purchased products
+user_purchases = {}
 
 
 # Handler for the "Buy" button
@@ -496,6 +509,11 @@ async def buy_product(callback_query: types.CallbackQuery):
                                    InlineKeyboardButton('Купить', pay=True)
                                )
                                )
+
+        # Store the purchased product's name along with the user ID
+        user_id = callback_query.from_user.id
+        user_purchases[user_id] = product_name
+
     else:
         await bot.send_message(callback_query.from_user.id, "Product not found!")
 
