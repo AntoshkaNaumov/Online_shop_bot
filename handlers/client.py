@@ -114,6 +114,30 @@ async def pay_information(message: types.Message):
         'ЮMoney, Qiwi, Visa, Master Card, МИР, мобильная коммерция и другие.')
 
 
+# Handler for "Мои заказы" button in main_menu
+@dp.message_handler(commands="Мои заказы")
+async def show_orders(message: types.Message):
+    conn = sqlite3.connect('online_shop.db')
+    cur = conn.cursor()
+
+    user_id = message.from_user.id
+
+    # Fetch the user's orders from the database
+    cur.execute("SELECT order_number, order_summary FROM orders WHERE user_id = ?", (user_id,))
+    orders = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    if orders:
+        orders_list = "\n".join([f"{order[0]}. {order[1]}" for order in orders])
+        orders_message = f"Ваши заказы:\n{orders_list}"
+    else:
+        orders_message = "У вас пока нет заказов."
+
+    await message.answer(orders_message)
+
+
 async def shop_menu_command(message: types.Message):
     # Retrieve products from the database using the sql_read function
     products = await sqlite_db.sql_read()
