@@ -299,7 +299,6 @@ async def cancel_order(message: types.Message, state: FSMContext):
     await command_start(message)  # Вызываем обработчик /start для отображения главного меню
 
 
-# Handler to confirm the order
 @dp.message_handler(lambda message: message.text == "Подтвердить")
 async def confirm_order(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
@@ -322,7 +321,7 @@ async def confirm_order(message: types.Message, state: FSMContext):
     total_quantity, total_price = calculate_cart_total(user_cart, db_connection)
     db_connection.close()
 
-    # Save the order in the orders table
+    # Save the order in the orders table and update the status
     conn = sqlite3.connect('online_shop.db')
     cur = conn.cursor()
 
@@ -331,8 +330,8 @@ async def confirm_order(message: types.Message, state: FSMContext):
 
     order_summary = f"Заказ #{order_number}\n{cart_summary}\nОбщая сумма: {total_price} руб."
 
-    cur.execute("INSERT INTO orders (user_id, order_number, order_summary) VALUES (?, ?, ?)",
-                (user_id, order_number, order_summary))
+    cur.execute("INSERT INTO orders (user_id, order_number, order_summary, status) VALUES (?, ?, ?, ?)",
+                (user_id, order_number, order_summary, "подтвержден"))  # Установка статуса на "подтвержден"
     conn.commit()
 
     cur.close()
