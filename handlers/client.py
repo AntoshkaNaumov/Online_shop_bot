@@ -427,6 +427,7 @@ async def success(message: types.Message, state: FSMContext):
         cur = conn.cursor()
 
         order_number = extract_order_number(cart_summary)  # Extract order number from summary
+        print(order_number)
 
         cur.execute("UPDATE orders SET status = 'оплачен' WHERE order_number = ?", (order_number,))
         conn.commit()
