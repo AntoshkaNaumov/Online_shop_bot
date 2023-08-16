@@ -13,7 +13,8 @@ def sql_start():
                 '(id INTEGER PRIMARY KEY AUTOINCREMENT, '
                 'user_id INTEGER, '
                 'order_number TEXT, '
-                'order_summary TEXT)')
+                'order_summary TEXT, '
+                'status TEXT DEFAULT "новый")')  # Добавляем столбец "status" с значением по умолчанию
     base.commit()
 
 
