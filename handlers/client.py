@@ -419,7 +419,15 @@ async def success(message: types.Message, state: FSMContext):
             data["user_cart"] = {}  # Clear the cart
         await state.finish()
     else:
-        await message.answer("Для оформления заказа, пожалуйста, зарегистрируйтесь.\nВведите /Регистрация")
+        # await message.answer("Для оформления заказа, пожалуйста, зарегистрируйтесь.\nВведите /Регистрация")
+        product_name = "Product Name"  # Replace with the actual product name
+
+        # Get the user's Telegram link
+        user_link = f"[Пользователь](tg://user?id={message.from_user.id})"
+
+        # Send a message to the group administrator with the user's link and the product name
+        admin_notification = f"Пользователь {user_link} совершил оплату и купил товар: {product_name}"
+        await bot.send_message(GROUP_ADMIN_ID, admin_notification)
 
 
 # Handler for "Мои заказы" button in the cart view
