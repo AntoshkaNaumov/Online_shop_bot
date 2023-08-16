@@ -37,34 +37,39 @@ async def command_start(message: types.Message):
         await message.reply('Чат не найден. Пожалуйста, используйте бота в ЛС: https://t.me/online_shop23_bot')
 
 
-# Обработчик для команды регистрации
-@dp.message_handler(commands=['Регистрация'])
+@dp.message_handler(commands=['Регистрация'], state=None)
 async def registration(message: types.Message):
-    await message.answer("Введите свое имя:")
+    conn = sqlite3.connect('users.sql')
+    cur = conn.cursor()
+
+    cur.execute('CREATE TABLE IF NOT EXISTS users'
+                ' (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name VARCHAR(100), telephone VARCHAR(50),'
+                ' address VARCHAR(200))')
+    conn.commit()
+    cur.close()
+    conn.close()
     await Registration.name.set()
+    await bot.send_message(message.from_user.id, 'Сейчас Вас зарегистрируем! Введите Ваше имя')
 
 
-# Обработчик для имени пользователя (часть регистрации)
 @dp.message_handler(state=Registration.name)
 async def user_nam(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['name'] = message.text
 
-    await message.answer("Введите свой номер телефона:")
-    await Registration.telephone.set()
+    await Registration.next()
+    await bot.send_message(message.chat.id, 'Введите номер телефона')
 
 
-# Обработчик для номера телефона пользователя (часть регистрации)
 @dp.message_handler(state=Registration.telephone)
 async def user_tel(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['telephone'] = message.text
 
-    await message.answer("Введите свой адрес:")
-    await Registration.address.set()
+    await Registration.next()
+    await bot.send_message(message.chat.id, 'Введите адрес доставки')
 
 
-# Обработчик для адреса пользователя (часть регистрации)
 @dp.message_handler(state=Registration.address)
 async def user_address(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
@@ -94,7 +99,7 @@ async def user_address(message: types.Message, state: FSMContext):
     conn.close()
 
     await state.finish()
-
+    
 
 async def shop_information(message: types.Message):
     await bot.send_message(message.from_user.id,
