@@ -99,7 +99,7 @@ async def user_address(message: types.Message, state: FSMContext):
     conn.close()
 
     await state.finish()
-    
+
 
 async def shop_information(message: types.Message):
     await bot.send_message(message.from_user.id,
@@ -388,6 +388,15 @@ async def process_pre_checkout_query(pre_checkout_query: types.PreCheckoutQuery)
     await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
 
+# Функция для извлечения номера заказа из строки заказа
+def extract_order_number(order_summary):
+    # Пример: "Заказ #12345\n..."
+    order_number_start = order_summary.find("#") + 1
+    order_number_end = order_summary.find("\n", order_number_start)
+    order_number = order_summary[order_number_start:order_number_end]
+    return order_number
+
+
 @dp.message_handler(content_types=types.ContentType.SUCCESSFUL_PAYMENT)
 async def success(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
@@ -406,6 +415,18 @@ async def success(message: types.Message, state: FSMContext):
             f"{cart_summary}\n"
             "Спасибо за заказ!"
         )
+
+        # Update the order status to "оплачен" in the database
+        conn = sqlite3.connect('online_shop.db')
+        cur = conn.cursor()
+
+        order_number = extract_order_number(cart_summary)  # Extract order number from summary
+
+        cur.execute("UPDATE orders SET status = 'оплачен' WHERE order_number = ?", (order_number,))
+        conn.commit()
+
+        cur.close()
+        conn.close()
 
         # Send the order confirmation message to the user
         await message.answer(order_confirmation_message)
