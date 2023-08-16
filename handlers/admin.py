@@ -75,6 +75,8 @@ async def load_price(message: types.Message, state: FSMContext):
 
         await sqlite_db.sql_add_command(state)
         await state.finish()
+        # Отправляем сообщение пользователю о успешном добавлении товара
+        await message.answer("Товар успешно добавлен!")
 
 
 # Выход из состояний
