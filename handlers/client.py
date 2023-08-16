@@ -451,15 +451,15 @@ async def show_my_orders(message: types.Message):
 
     user_id = message.from_user.id
 
-    # Fetch the user's orders from the database
-    cur.execute("SELECT order_number, order_summary FROM orders WHERE user_id = ?", (user_id,))
+    # Fetch the user's orders with order numbers, summaries, and statuses from the database
+    cur.execute("SELECT order_number, order_summary, status FROM orders WHERE user_id = ?", (user_id,))
     orders = cur.fetchall()
 
     cur.close()
     conn.close()
 
     if orders:
-        orders_list = "\n".join([f"{order[0]}. {order[1]}" for order in orders])
+        orders_list = "\n".join([f"{order[0]}. {order[1]} (Статус: {order[2]})" for order in orders])
         orders_message = f"Ваши заказы:\n{orders_list}"
     else:
         orders_message = "У вас пока нет заказов."
@@ -526,20 +526,21 @@ async def show_orders(message: types.Message):
 
     user_id = message.from_user.id
 
-    # Fetch the user's orders from the database
-    cur.execute("SELECT order_number, order_summary FROM orders WHERE user_id = ?", (user_id,))
+    # Fetch the user's orders with order numbers, summaries, and statuses from the database
+    cur.execute("SELECT order_number, order_summary, status FROM orders WHERE user_id = ?", (user_id,))
     orders = cur.fetchall()
 
     cur.close()
     conn.close()
 
     if orders:
-        orders_list = "\n".join([f"{order[0]}. {order[1]}" for order in orders])
+        orders_list = "\n".join([f"{order[0]}. {order[1]} (Статус: {order[2]})" for order in orders])
         orders_message = f"Ваши заказы:\n{orders_list}"
     else:
         orders_message = "У вас пока нет заказов."
 
     await message.answer(orders_message)
+
 
 # Handler for the "Help" button
 async def help_command(message: types.Message):
