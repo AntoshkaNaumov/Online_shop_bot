@@ -7,7 +7,7 @@ b3 = KeyboardButton('/Каталог')
 b4 = KeyboardButton('/Регистрация')
 b5 = KeyboardButton('/Оплата')
 b6 = KeyboardButton('/Корзина')
-b7 = KeyboardButton('/Мои заказы')
+b7 = KeyboardButton('/Заказы')
 
 # Create a custom keyboard layout
 kb_client = ReplyKeyboardMarkup(resize_keyboard=True)
