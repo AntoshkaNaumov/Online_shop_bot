@@ -14,6 +14,7 @@ from data_base import sqlite_db
 from config import PAYMENT_TOKEN, GROUP_ADMIN_ID
 import sqlite3
 import time
+import os
 
 
 class Registration(StatesGroup):
@@ -248,6 +249,11 @@ async def show_cart(message: types.Message, state: FSMContext):
 async def checkout_order(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         user_cart = data.get("user_cart", {})
+
+    # Проверка наличия файла базы данных
+    if not os.path.exists('users.sql'):
+        await message.answer("Для оформления заказа, пожалуйста, зарегистрируйтесь.\nВведите /Регистрация")
+        return  # Выход из функции
 
     # Retrieve user data from the database
     conn = sqlite3.connect('users.sql')
