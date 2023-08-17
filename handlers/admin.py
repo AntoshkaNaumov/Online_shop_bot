@@ -109,8 +109,20 @@ async def delete_item(message: types.Message):
 
 @dp.message_handler(commands='Посмотреть заказы')
 async def view_confirmed_orders(message: types.Message):
-    if message.from_user.id == ID:  # Замените ID на ваше значение
-        confirmed_orders = await sqlite_db.read_all_orders()
+    if message.from_user.id == ID:
+        import sqlite3
+
+        # Подключение к базе данных
+        conn = sqlite3.connect('online_shop.db')
+        cur = conn.cursor()
+
+        # Выполнение SQL-запроса
+        cur.execute("SELECT * FROM orders WHERE status = 'подтвержден'")
+        confirmed_orders = cur.fetchall()
+
+        # Закрытие соединения с базой данных
+        cur.close()
+        conn.close()
 
         if confirmed_orders:
             response = "Список подтвержденных заказов:\n"
