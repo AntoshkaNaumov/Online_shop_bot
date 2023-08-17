@@ -106,6 +106,14 @@ async def delete_item(message: types.Message):
             await bot.send_message(message.from_user.id, text='^^^', reply_markup=InlineKeyboardMarkup().\
                 add(InlineKeyboardButton(f'Удалить {ret[1]}', callback_data=f'del {ret[1]}')))
 
+@dp.message_handler(commands='Заказы')
+async def delete_item(message: types.Message):
+    if message.from_user.id == ID:
+        read = await sqlite_db.read_all_orders()
+        # Вывод результатов
+        for order in read:
+            print(order)
+
 
 # Регистрирует хендлеры
 def register_handlers_admin(dp: Dispatcher):
