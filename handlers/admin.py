@@ -126,7 +126,7 @@ async def view_confirmed_orders(message: types.Message):
     if confirmed_orders:
         response = "Список подтвержденных заказов:\n"
         for order in confirmed_orders:
-            response += f"{order}\n"
+            response += f"Заказ #{order[2]}\nОписание: {order[3]}\n\nСтатус: {order[4]}\n\n"
 
         await message.answer(response)
     else:
