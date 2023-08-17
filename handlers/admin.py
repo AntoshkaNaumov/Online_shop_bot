@@ -108,7 +108,7 @@ async def delete_item(message: types.Message):
                 add(InlineKeyboardButton(f'Удалить {ret[1]}', callback_data=f'del {ret[1]}')))
 
 
-@dp.message_handler(commands='Посмотреть заказы')
+@dp.message_handler(commands='Просмотр')
 async def view_confirmed_orders(message: types.Message):
 
     # Подключение к базе данных
