@@ -564,7 +564,7 @@ async def show_orders(message: types.Message):
         orders_list = "\n".join([f"{order[0]}. {order[1]} (Статус: {order[2]})" for order in orders])
         orders_message = f"Ваши заказы:\n{orders_list}"
     else:
-        orders_message = "У вас пока нет заказов."
+        orders_message = "Еще нет заказов."
 
     await message.answer(orders_message)
 
