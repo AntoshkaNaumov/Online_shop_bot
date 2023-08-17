@@ -133,6 +133,26 @@ async def view_confirmed_orders(message: types.Message):
         await message.answer("Нет подтвержденных заказов.")
 
 
+# Функция для обработки номера заказа и обновления статуса в базе данных
+async def process_order_number(message: types.Message):
+    if message.from_user.id == ID:
+        order_number = message.text
+
+        # Подключение к базе данных
+        conn = sqlite3.connect('online_shop.db')
+        cur = conn.cursor()
+
+        # Обновление статуса заказа в базе данных
+        cur.execute("UPDATE orders SET status = 'доставлен' WHERE order_number = ?", (order_number,))
+        conn.commit()
+
+        # Закрытие соединения с базой данных
+        cur.close()
+        conn.close()
+
+        await message.answer(f"Заказ #{order_number} помечен как 'доставлен'.")
+
+
 # Регистрирует хендлеры
 def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(cm_start, commands=['Загрузить'], state=None)
@@ -143,3 +163,4 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(cancel_handler, state="*", commands='отмена')
     dp.register_message_handler(cancel_handler, Text(equals='отмена', ignore_case=True), state="*")
     dp.register_message_handler(make_changes_command, commands=['moderator'], is_chat_admin=True)
+    dp.register_message_handler(process_order_number, state="*", commands='mark_delivered')
