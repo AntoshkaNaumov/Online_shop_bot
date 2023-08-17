@@ -486,7 +486,7 @@ async def show_my_orders(message: types.Message):
     conn.close()
 
     if orders:
-        orders_list = "\n".join([f"{order[0]}. {order[1]} (Статус: {order[2]})" for order in orders])
+        orders_list = "\n".join([f"{order[1]} (Статус: {order[2]})" for order in orders])
         orders_message = f"Ваши заказы:\n{orders_list}"
     else:
         orders_message = "У вас пока нет заказов."
@@ -561,7 +561,7 @@ async def show_orders(message: types.Message):
     conn.close()
 
     if orders:
-        orders_list = "\n".join([f"{order[0]}. {order[1]} (Статус: {order[2]})" for order in orders])
+        orders_list = "\n".join([f"{order[1]} (Статус: {order[2]})" for order in orders])
         orders_message = f"Ваши заказы:\n{orders_list}"
     else:
         orders_message = "Еще нет заказов."
