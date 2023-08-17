@@ -231,9 +231,7 @@ async def show_cart(message: types.Message, state: FSMContext):
     cart_message = "Товары в корзине:\n"
     # ... Формируем сообщение о товарах в корзине ...
     for product_name, quantity in user_cart.items():
-        cart_message += f"{product_name} - {quantity} "
-        # Добавляем кнопку для удаления товара
-        cart_message += f"[Удалить](delete_{product_name})\n"
+        cart_message += f"{product_name} - {quantity} \n"
 
     # Добавляем информацию о количестве и общей сумме в сообщение
     cart_message += f"\nВсего товаров: {total_quantity} шт.\n"
@@ -245,6 +243,21 @@ async def show_cart(message: types.Message, state: FSMContext):
     kb_cart_actions.row("Назад")
 
     await message.answer(cart_message, reply_markup=kb_cart_actions)
+
+
+# Обработчик для кнопки "Очистить корзину"
+async def clear_cart(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["user_cart"] = {}  # Просто очищаем корзину в данных состояния
+
+    await message.answer("Корзина успешно очищена.")
+    await show_cart(message, state)  # Показываем обновленную корзину
+
+
+# Добавьте этот обработчик в вашем модуле
+@dp.message_handler(lambda message: message.text == "Очистить корзину", state="*")
+async def handle_clear_cart(message: types.Message, state: FSMContext):
+    await clear_cart(message, state)
 
 
 # Handler for "Оформить заказ" button in the cart view
