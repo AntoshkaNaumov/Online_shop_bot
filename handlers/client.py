@@ -270,7 +270,7 @@ async def checkout_order(message: types.Message, state: FSMContext):
     if user_data:
         user_name, user_telephone, user_add = user_data
 
-        cart_summary = "Ваш заказ:\n"
+        cart_summary = "Детали заказа:\n"
         for product_name, quantity in user_cart.items():
             cart_summary += f"{product_name} - {quantity} \n"
 
