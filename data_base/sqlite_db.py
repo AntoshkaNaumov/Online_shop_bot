@@ -47,3 +47,9 @@ async def get_product_by_name(product_name):
         if name == product_name:
             return product
     return None
+
+
+async def read_all_orders():
+    # Выполнение SQL-запроса
+    return cur.execute("SELECT * FROM orders WHERE status = 'подтвержден'")
+
