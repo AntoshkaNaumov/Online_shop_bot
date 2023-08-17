@@ -10,6 +10,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
 )
 from aiogram.types import LabeledPrice
+from aiogram.utils.callback_data import CallbackData
 from data_base import sqlite_db
 from config import PAYMENT_TOKEN, GROUP_ADMIN_ID
 import sqlite3
@@ -209,9 +210,12 @@ def calculate_cart_total(user_cart, db_connection):
     return total_quantity, total_price
 
 
+# CallbackData для обработки кнопок удаления товаров
+delete_item_callback = CallbackData("delete", "product_name")
+
+
 # Обработчик кнопки "Корзина"
 async def show_cart(message: types.Message, state: FSMContext):
-    # Получаем текущую корзину пользователя из состояния
     async with state.proxy() as data:
         user_cart = data.get("user_cart", {})
 
@@ -219,29 +223,43 @@ async def show_cart(message: types.Message, state: FSMContext):
         await message.answer("Ваша корзина пуста.")
         return
 
-    # Создаем подключение к базе данных
-    db_connection = sqlite3.connect("online_shop.db")
-
-    # Вызываем функцию для подсчета общей суммы и количества товаров
-    total_quantity, total_price = calculate_cart_total(user_cart, db_connection)
-
-    # Закрываем соединение с базой данных
-    db_connection.close()
-
     cart_message = "Товары в корзине:\n"
-    # ... Формируем сообщение о товарах в корзине ...
     for product_name, quantity in user_cart.items():
-        cart_message += f"{product_name} - {quantity} \n"
+        cart_message += f"{product_name} - {quantity} "
+        cart_message += f"[Удалить {product_name}](delete_{product_name})\n"
 
-    # Добавляем информацию о количестве и общей сумме в сообщение
-    cart_message += f"\nВсего товаров: {total_quantity} шт.\n"
-    cart_message += f"Общая сумма заказа: {total_price} руб."
-
-    kb_cart_actions = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb_cart_actions.row("Оформить заказ", "Мои заказы")
-    kb_cart_actions.row("Назад")
+    kb_cart_actions = InlineKeyboardMarkup(row_width=2)
+    for product_name in user_cart.keys():
+        kb_cart_actions.insert(
+            InlineKeyboardButton(
+                f"Удалить {product_name}",
+                callback_data=delete_item_callback.new(product_name=product_name)
+            )
+        )
+    kb_cart_actions.add(
+        InlineKeyboardButton("Оформить заказ", callback_data="place_order"),
+        InlineKeyboardButton("Мои заказы", callback_data="my_orders"),
+        InlineKeyboardButton("Назад", callback_data="go_back")
+    )
 
     await message.answer(cart_message, reply_markup=kb_cart_actions)
+
+
+# Обработчик кнопок удаления товаров
+@dp.callback_query_handler(delete_item_callback.filter())
+async def delete_item_from_cart(query: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    product_name = callback_data["product_name"]
+
+    async with state.proxy() as data:
+        user_cart = data.get("user_cart", {})
+
+    if product_name in user_cart:
+        del user_cart[product_name]
+        await query.answer(f"Товар '{product_name}' удален из корзины.")
+    else:
+        await query.answer("Такого товара нет в вашей корзине.")
+
+    await show_cart(query.message, state)
 
 
 # Handler for "Оформить заказ" button in the cart view
