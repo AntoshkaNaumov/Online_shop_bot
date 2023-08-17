@@ -107,7 +107,7 @@ async def delete_item(message: types.Message):
                 add(InlineKeyboardButton(f'Удалить {ret[1]}', callback_data=f'del {ret[1]}')))
 
 
-@dp.message_handler(commands='Заказы')
+@dp.message_handler(commands='Посмотреть заказы')
 async def view_confirmed_orders(message: types.Message):
     if message.from_user.id == ID:  # Замените ID на ваше значение
         confirmed_orders = await sqlite_db.read_all_orders()
