@@ -345,7 +345,7 @@ async def confirm_order(message: types.Message, state: FSMContext):
 
     # Create a keyboard for payment
     kb_payment = InlineKeyboardMarkup().add(
-        InlineKeyboardButton("Оплатить", callback_data=f"оплатить:{order_number}")  # Передаем номер заказа в callback_data
+        InlineKeyboardButton("Оплатить", callback_data="оплатить")
     )
 
     # Send the order confirmation message with payment button
@@ -426,8 +426,7 @@ async def success(message: types.Message, state: FSMContext):
         conn = sqlite3.connect('online_shop.db')
         cur = conn.cursor()
 
-        # order_number = extract_order_number(cart_summary)  # Extract order number from summary
-        order_number = int(message.successful_payment.invoice_payload)  # Извлекаем номер заказа из invoice_payload
+        order_number = extract_order_number(cart_summary)  # Extract order number from summary
         print(order_number)
 
         cur.execute("UPDATE orders SET status = 'оплачен' WHERE order_number = ?", (order_number,))
