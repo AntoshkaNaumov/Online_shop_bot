@@ -126,7 +126,7 @@ async def view_confirmed_orders(message: types.Message):
     if confirmed_orders:
         response = "Список подтвержденных заказов:\n"
         for order in confirmed_orders:
-            response += f"Заказ #{order['order_number']}\nСтатус: {order['status']}\n\n"
+            response += f"Заказ #{order[0]}\nСтатус: {order[1]}\n\n"
 
         await message.answer(response)
     else:
@@ -136,21 +136,23 @@ async def view_confirmed_orders(message: types.Message):
 # Функция для обработки номера заказа и обновления статуса в базе данных
 async def process_order_number(message: types.Message):
     if message.from_user.id == ID:
-        order_number = message.text
+        try:
+            order_number = int(message.text)  # Пытаемся преобразовать введенный текст в число
+            # Подключение к базе данных
+            conn = sqlite3.connect('online_shop.db')
+            cur = conn.cursor()
 
-        # Подключение к базе данных
-        conn = sqlite3.connect('online_shop.db')
-        cur = conn.cursor()
+            # Обновление статуса заказа в базе данных
+            cur.execute("UPDATE orders SET status = 'доставлен' WHERE order_number = ?", (order_number,))
+            conn.commit()
 
-        # Обновление статуса заказа в базе данных
-        cur.execute("UPDATE orders SET status = 'доставлен' WHERE order_number = ?", (order_number,))
-        conn.commit()
+            # Закрытие соединения с базой данных
+            cur.close()
+            conn.close()
 
-        # Закрытие соединения с базой данных
-        cur.close()
-        conn.close()
-
-        await message.answer(f"Заказ #{order_number} помечен как 'доставлен'.")
+            await message.answer(f"Заказ #{order_number} помечен как 'доставлен'.")
+        except ValueError:
+            await message.answer("Введите корректный номер заказа.")
 
 
 # Регистрирует хендлеры
@@ -163,4 +165,6 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(cancel_handler, state="*", commands='отмена')
     dp.register_message_handler(cancel_handler, Text(equals='отмена', ignore_case=True), state="*")
     dp.register_message_handler(make_changes_command, commands=['moderator'], is_chat_admin=True)
-    dp.register_message_handler(process_order_number, state="*", commands='mark_delivered')
+    # Регистрируем хендлер для команды /mark_delivered
+    dp.register_message_handler(process_order_number, commands='mark_delivered')
+
