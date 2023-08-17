@@ -106,13 +106,20 @@ async def delete_item(message: types.Message):
             await bot.send_message(message.from_user.id, text='^^^', reply_markup=InlineKeyboardMarkup().\
                 add(InlineKeyboardButton(f'Удалить {ret[1]}', callback_data=f'del {ret[1]}')))
 
+
 @dp.message_handler(commands='Заказы')
-async def delete_item(message: types.Message):
-    if message.from_user.id == ID:
-        read = await sqlite_db.read_all_orders()
-        # Вывод результатов
-        for order in read:
-            print(order)
+async def view_confirmed_orders(message: types.Message):
+    if message.from_user.id == ID:  # Замените ID на ваше значение
+        confirmed_orders = await sqlite_db.read_all_orders()
+
+        if confirmed_orders:
+            response = "Список подтвержденных заказов:\n"
+            for order in confirmed_orders:
+                response += f"Заказ #{order['order_number']}\nСтатус: {order['status']}\n\n"
+
+            await message.answer(response)
+        else:
+            await message.answer("Нет подтвержденных заказов.")
 
 
 # Регистрирует хендлеры
