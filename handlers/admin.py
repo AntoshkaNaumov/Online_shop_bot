@@ -7,6 +7,7 @@ from aiogram.dispatcher.filters import Text
 from data_base import sqlite_db
 from keyboards import admin_kb
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+import sqlite3
 
 
 ID = None
@@ -109,29 +110,27 @@ async def delete_item(message: types.Message):
 
 @dp.message_handler(commands='Посмотреть заказы')
 async def view_confirmed_orders(message: types.Message):
-    if message.from_user.id == ID:
-        import sqlite3
 
-        # Подключение к базе данных
-        conn = sqlite3.connect('online_shop.db')
-        cur = conn.cursor()
+    # Подключение к базе данных
+    conn = sqlite3.connect('online_shop.db')
+    cur = conn.cursor()
 
-        # Выполнение SQL-запроса
-        cur.execute("SELECT * FROM orders WHERE status = 'подтвержден'")
-        confirmed_orders = cur.fetchall()
+    # Выполнение SQL-запроса
+    cur.execute("SELECT * FROM orders WHERE status = 'подтвержден'")
+    confirmed_orders = cur.fetchall()
 
-        # Закрытие соединения с базой данных
-        cur.close()
-        conn.close()
+    # Закрытие соединения с базой данных
+    cur.close()
+    conn.close()
 
-        if confirmed_orders:
-            response = "Список подтвержденных заказов:\n"
-            for order in confirmed_orders:
-                response += f"Заказ #{order['order_number']}\nСтатус: {order['status']}\n\n"
+    if confirmed_orders:
+        response = "Список подтвержденных заказов:\n"
+        for order in confirmed_orders:
+            response += f"Заказ #{order['order_number']}\nСтатус: {order['status']}\n\n"
 
-            await message.answer(response)
-        else:
-            await message.answer("Нет подтвержденных заказов.")
+        await message.answer(response)
+    else:
+        await message.answer("Нет подтвержденных заказов.")
 
 
 # Регистрирует хендлеры
