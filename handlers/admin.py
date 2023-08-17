@@ -126,7 +126,7 @@ async def view_confirmed_orders(message: types.Message):
     if confirmed_orders:
         response = "Список подтвержденных заказов:\n"
         for order in confirmed_orders:
-            response += f"Заказ #{order[2]}\nОписание: {order[3]}\n\nСтатус: {order[4]}\n\n"
+            response += f"Номер заказа #{order[2]}\nОписание: {order[3]}\n\nСтатус: {order[4]}\n\n"
 
         await message.answer(response)
     else:
@@ -186,4 +186,3 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(make_changes_command, commands=['moderator'], is_chat_admin=True)
     dp.register_message_handler(start_mark_delivered, commands='mark_delivered')
     dp.register_message_handler(process_order_number, state=MarkDelivered.waiting_for_order_number)
-
