@@ -10,6 +10,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
 )
 from aiogram.types import LabeledPrice
+from aiogram.types import ReplyKeyboardRemove
 from data_base import sqlite_db
 from config import PAYMENT_TOKEN, GROUP_ADMIN_ID
 import sqlite3
@@ -366,6 +367,9 @@ async def confirm_order(message: types.Message, state: FSMContext):
 
     # Send the order confirmation message with payment button
     await message.answer(order_confirmation_message, reply_markup=kb_payment)
+    # Remove the ReplyKeyboardMarkup
+    await bot.send_message(message.from_user.id, "Ваш заказ подтвержден. Спасибо за заказ!",
+                           reply_markup=ReplyKeyboardRemove())
 
 
 # Function to generate a unique order identifier
