@@ -133,11 +133,27 @@ async def view_confirmed_orders(message: types.Message):
         await message.answer("Нет подтвержденных заказов.")
 
 
-# Функция для обработки номера заказа и обновления статуса в базе данных
-async def process_order_number(message: types.Message):
+# Задаем состояния для ожидания номера заказа
+class MarkDelivered(StatesGroup):
+    waiting_for_order_number = State()
+
+
+# Регистрируем хендлер для команды /mark_delivered
+@dp.message_handler(commands=['mark_delivered'])
+async def start_mark_delivered(message: types.Message):
+    if message.from_user.id == ID:
+        await message.answer("Введите номер заказа для пометки как 'доставлен':")
+        await MarkDelivered.waiting_for_order_number.set()
+    else:
+        await message.answer("У вас нет прав для выполнения этой команды.")
+
+
+# Хендлер для обработки текстового сообщения (номера заказа)
+@dp.message_handler(state=MarkDelivered.waiting_for_order_number)
+async def process_order_number(message: types.Message, state: FSMContext):
     if message.from_user.id == ID:
         try:
-            order_number = int(message.text)  # Пытаемся преобразовать введенный текст в число
+            order_number = int(message.text)
             # Подключение к базе данных
             conn = sqlite3.connect('online_shop.db')
             cur = conn.cursor()
@@ -153,6 +169,9 @@ async def process_order_number(message: types.Message):
             await message.answer(f"Заказ #{order_number} помечен как 'доставлен'.")
         except ValueError:
             await message.answer("Введите корректный номер заказа.")
+        await state.finish()
+    else:
+        await message.answer("У вас нет прав для выполнения этой команды.")
 
 
 # Регистрирует хендлеры
@@ -165,6 +184,6 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(cancel_handler, state="*", commands='отмена')
     dp.register_message_handler(cancel_handler, Text(equals='отмена', ignore_case=True), state="*")
     dp.register_message_handler(make_changes_command, commands=['moderator'], is_chat_admin=True)
-    # Регистрируем хендлер для команды /mark_delivered
-    dp.register_message_handler(process_order_number, commands='mark_delivered')
+    dp.register_message_handler(start_mark_delivered, commands='mark_delivered')
+    dp.register_message_handler(process_order_number, state=MarkDelivered.waiting_for_order_number)
 
