@@ -290,7 +290,11 @@ async def checkout_order(message: types.Message, state: FSMContext):
 
         cart_summary = "Детали заказа:\n"
         for product_name, quantity in user_cart.items():
-            cart_summary += f"{product_name} - {quantity} - {order_number}\n"
+            # Add product details to cart_summary
+            cart_summary += f"{product_name} - {quantity}\n"
+
+        # Store order_number and cart_summary in state data
+        await state.update_data(user_data=user_data, order_number=order_number, cart_summary=cart_summary)
 
         order_message = (
             f"Подтвердите Ваш заказ:\n"
@@ -305,8 +309,8 @@ async def checkout_order(message: types.Message, state: FSMContext):
         kb_confirm_order.row("Отмена")
 
         # await Registration.address.set()
-        await state.update_data(user_data=user_data)
-        await state.update_data(cart_summary=cart_summary)
+        # await state.update_data(user_data=user_data)
+        # await state.update_data(cart_summary=cart_summary)
 
         await message.answer(order_message, reply_markup=kb_confirm_order)
     else:
@@ -327,6 +331,7 @@ async def cancel_order(message: types.Message, state: FSMContext):
 async def confirm_order(callback_query: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         user_data = data['user_data']
+        order_number = data['order_number']
         cart_summary = data['cart_summary']
         user_cart = data.get('user_cart', {})
 
@@ -348,18 +353,6 @@ async def confirm_order(callback_query: types.CallbackQuery, state: FSMContext):
     # Save the order in the orders table and update the status
     conn = sqlite3.connect('online_shop.db')
     cur = conn.cursor()
-
-    order_number = None
-    # Split cart_summary to retrieve order_number
-    cart_summary_lines = cart_summary.split('\n')
-    for line in cart_summary_lines:
-        if cart_summary in line:  # Use the pattern to find the line with order_number
-            order_number = line.split(' - ')[-1]  # Extract order_number from the line
-            break
-
-    if order_number is None:
-        await bot.send_message(callback_query.from_user.id, "Failed to retrieve order number. Please contact support.")
-        return
 
     order_summary = f"Заказ #{order_number}\n{cart_summary}\nОбщая сумма: {total_price} руб."
 
