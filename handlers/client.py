@@ -286,10 +286,11 @@ async def checkout_order(message: types.Message, state: FSMContext):
 
     if user_data:
         user_name, user_telephone, user_add = user_data
+        order_number = generate_order_number()  # Generate a unique order number
 
         cart_summary = "Детали заказа:\n"
         for product_name, quantity in user_cart.items():
-            cart_summary += f"{product_name} - {quantity} \n"
+            cart_summary += f"{product_name} - {quantity} - {order_number}\n"
 
         order_message = (
             f"Подтвердите Ваш заказ:\n"
@@ -323,7 +324,7 @@ async def cancel_order(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(lambda message: message.text == "Подтвердить")
-async def confirm_order(message: types.Message, state: FSMContext):
+async def confirm_order(message: types.Message, callback_query: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         user_data = data['user_data']
         cart_summary = data['cart_summary']
@@ -349,7 +350,15 @@ async def confirm_order(message: types.Message, state: FSMContext):
     cur = conn.cursor()
 
     user_id = message.from_user.id
-    order_number = generate_order_number()  # Generate a unique order number
+    # Extract order_number from cart_summary
+    order_number = None
+    if user_cart:
+        # Extract order_number from the first product entry in cart_summary
+        order_number = user_cart[list(user_cart.keys())[0]].get('order_number', None)
+
+    if order_number is None:
+        await bot.send_message(callback_query.from_user.id, "Failed to retrieve order number. Please contact support.")
+        return
 
     order_summary = f"Заказ #{order_number}\n{cart_summary}\nОбщая сумма: {total_price} руб."
 
