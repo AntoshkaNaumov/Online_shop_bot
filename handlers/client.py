@@ -353,6 +353,7 @@ async def confirm_order(callback_query: types.CallbackQuery, state: FSMContext):
     # Extract order_number from cart_summary
     order_number = None
     if user_cart:
+        print(user_cart)
         # Extract order_number from the first product entry in cart_summary
         order_number = user_cart[list(user_cart.keys())[0]].get('order_number', None)
 
