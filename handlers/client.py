@@ -328,7 +328,7 @@ async def cancel_order(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(lambda message: message.text == "Подтвердить")
-async def confirm_order(callback_query: types.CallbackQuery, state: FSMContext):
+async def confirm_order(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         user_data = data['user_data']
         order_number = data['order_number']
@@ -356,8 +356,8 @@ async def confirm_order(callback_query: types.CallbackQuery, state: FSMContext):
 
     order_summary = f"Заказ #{order_number}\n{cart_summary}\nОбщая сумма: {total_price} руб."
 
-    cur.execute("INSERT INTO orders (order_number, order_summary, status) VALUES (?, ?, ?)",
-                (order_number, order_summary, "подтвержден"))  # Установка статуса на "подтвержден"
+    cur.execute("INSERT INTO orders (user_id, order_number, order_summary, status) VALUES (?, ?, ?, ?)",
+                (message.from_user.id, order_number, order_summary, "подтвержден"))
     conn.commit()
 
     cur.close()
@@ -369,10 +369,10 @@ async def confirm_order(callback_query: types.CallbackQuery, state: FSMContext):
     )
 
     # Send the order confirmation message with payment button
-    await bot.send_message(callback_query.from_user.id, order_confirmation_message, reply_markup=kb_payment)
+    await message.answer(order_confirmation_message, reply_markup=kb_payment)
     # Remove the InlineKeyboardMarkup
-    await bot.edit_message_reply_markup(callback_query.from_user.id, callback_query.message.message_id)
-    await bot.send_message(callback_query.from_user.id, "Ваш заказ подтвержден. Спасибо за заказ!")
+    await bot.send_message(message.from_user.id, "Ваш заказ подтвержден. Спасибо за заказ!",
+                           reply_markup=ReplyKeyboardRemove())
 
     # Clear the user's cart and other data
     await state.update_data(user_cart={})
