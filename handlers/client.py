@@ -349,13 +349,13 @@ async def confirm_order(callback_query: types.CallbackQuery, state: FSMContext):
     conn = sqlite3.connect('online_shop.db')
     cur = conn.cursor()
 
-    # user_id = message.from_user.id
-    # Extract order_number from cart_summary
     order_number = None
-    if user_cart:
-        print(user_cart)
-        # Extract order_number from the first product entry in cart_summary
-        order_number = user_cart[list(user_cart.keys())[0]].get('order_number', None)
+    # Split cart_summary to retrieve order_number
+    cart_summary_lines = cart_summary.split('\n')
+    for line in cart_summary_lines:
+        if cart_summary in line:  # Use the pattern to find the line with order_number
+            order_number = line.split(' - ')[-1]  # Extract order_number from the line
+            break
 
     if order_number is None:
         await bot.send_message(callback_query.from_user.id, "Failed to retrieve order number. Please contact support.")
