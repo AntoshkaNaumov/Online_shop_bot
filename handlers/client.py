@@ -354,7 +354,7 @@ async def confirm_order(message: types.Message, state: FSMContext):
     conn = sqlite3.connect('online_shop.db')
     cur = conn.cursor()
 
-    order_summary = f"Заказ #{order_number}\n{cart_summary}\nОбщая сумма: {total_price} руб."
+    order_summary = f"{cart_summary}\nОбщая сумма: {total_price} руб."
 
     cur.execute("INSERT INTO orders (user_id, order_number, order_summary, status) VALUES (?, ?, ?, ?)",
                 (message.from_user.id, order_number, order_summary, "подтвержден"))
@@ -374,9 +374,7 @@ async def confirm_order(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, "Ваш заказ подтвержден. Спасибо за заказ!",
                            reply_markup=ReplyKeyboardRemove())
 
-    # Clear the user's cart and other data
-    await state.update_data(user_cart={})
-    await state.reset_state()
+
 
 
 # Function to generate a unique order identifier
@@ -398,6 +396,7 @@ async def process_payment(callback_query: types.CallbackQuery, state: FSMContext
         product_name = "Ваш продукт"  # По умолчанию
 
         if user_cart:
+            print(user_cart)
             # Если корзина не пуста, берем первый продукт из неё
             product_name = list(user_cart.keys())[0]  # Получаем первый ключ из словаря корзины
 
@@ -414,6 +413,9 @@ async def process_payment(callback_query: types.CallbackQuery, state: FSMContext
                 InlineKeyboardButton('Купить', pay=True)
             )
         )
+        # Clear the user's cart and other data
+        await state.update_data(user_cart={})
+        await state.reset_state()
 
 
 @dp.pre_checkout_query_handler(lambda query: True)
