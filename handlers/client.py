@@ -365,7 +365,7 @@ async def confirm_order(message: types.Message, state: FSMContext):
 
     # Create a keyboard for payment
     kb_payment = InlineKeyboardMarkup().add(
-        InlineKeyboardButton("Оплатить", callback_data="оплатить")
+        InlineKeyboardButton("Оплатить", callback_data="Оплатить")
     )
 
     # Send the order confirmation message with payment button
@@ -384,7 +384,7 @@ def generate_order_number():
     return str(int(time.time()))  # Just a simple example using timestamp
 
 
-@dp.callback_query_handler(lambda query: query.data == 'оплатить')
+@dp.callback_query_handler(lambda query: query.data == 'Оплатить')
 async def process_payment(callback_query: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         user_cart = data.get('user_cart', {})
