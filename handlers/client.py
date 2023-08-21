@@ -413,9 +413,6 @@ async def process_payment(callback_query: types.CallbackQuery, state: FSMContext
                 InlineKeyboardButton('Купить', pay=True)
             )
         )
-        # Clear the user's cart and other data
-        await state.update_data(user_cart={})
-        await state.reset_state()
 
 
 @dp.pre_checkout_query_handler(lambda query: True)
@@ -437,6 +434,7 @@ async def success(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         user_data = data.get('user_data')
         cart_summary = data.get('cart_summary')
+        order_number = data['order_number']
 
     if user_data:
         user_name, user_telephone, user_add = user_data
@@ -454,9 +452,6 @@ async def success(message: types.Message, state: FSMContext):
         # Update the order status to "оплачен" in the database
         conn = sqlite3.connect('online_shop.db')
         cur = conn.cursor()
-
-        order_number = extract_order_number(cart_summary)  # Extract order number from summary
-        print(order_number)
 
         cur.execute("UPDATE orders SET status = 'оплачен' WHERE order_number = ?", (order_number,))
         conn.commit()
