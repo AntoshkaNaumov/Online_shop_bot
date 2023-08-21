@@ -324,7 +324,7 @@ async def cancel_order(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(lambda message: message.text == "Подтвердить")
-async def confirm_order(message: types.Message, callback_query: types.CallbackQuery, state: FSMContext):
+async def confirm_order(callback_query: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         user_data = data['user_data']
         cart_summary = data['cart_summary']
@@ -349,7 +349,7 @@ async def confirm_order(message: types.Message, callback_query: types.CallbackQu
     conn = sqlite3.connect('online_shop.db')
     cur = conn.cursor()
 
-    user_id = message.from_user.id
+    # user_id = message.from_user.id
     # Extract order_number from cart_summary
     order_number = None
     if user_cart:
@@ -362,8 +362,8 @@ async def confirm_order(message: types.Message, callback_query: types.CallbackQu
 
     order_summary = f"Заказ #{order_number}\n{cart_summary}\nОбщая сумма: {total_price} руб."
 
-    cur.execute("INSERT INTO orders (user_id, order_number, order_summary, status) VALUES (?, ?, ?, ?)",
-                (user_id, order_number, order_summary, "подтвержден"))  # Установка статуса на "подтвержден"
+    cur.execute("INSERT INTO orders (order_number, order_summary, status) VALUES (?, ?, ?)",
+                (order_number, order_summary, "подтвержден"))  # Установка статуса на "подтвержден"
     conn.commit()
 
     cur.close()
@@ -375,10 +375,14 @@ async def confirm_order(message: types.Message, callback_query: types.CallbackQu
     )
 
     # Send the order confirmation message with payment button
-    await message.answer(order_confirmation_message, reply_markup=kb_payment)
-    # Remove the ReplyKeyboardMarkup
-    await bot.send_message(message.from_user.id, "Ваш заказ подтвержден. Спасибо за заказ!",
-                           reply_markup=ReplyKeyboardRemove())
+    await bot.send_message(callback_query.from_user.id, order_confirmation_message, reply_markup=kb_payment)
+    # Remove the InlineKeyboardMarkup
+    await bot.edit_message_reply_markup(callback_query.from_user.id, callback_query.message.message_id)
+    await bot.send_message(callback_query.from_user.id, "Ваш заказ подтвержден. Спасибо за заказ!")
+
+    # Clear the user's cart and other data
+    await state.update_data(user_cart={})
+    await state.reset_state()
 
 
 # Function to generate a unique order identifier
