@@ -341,6 +341,7 @@ async def confirm_order(message: types.Message, state: FSMContext):
         f"Заказчик: {user_data[0]}\n"
         f"Телефон: {user_data[1]}\n"
         f"Адрес: {user_data[2]}\n\n"
+        f"Номер заказа: {order_number}\n"
         f"{cart_summary}\n"
         "Спасибо за заказ!"
     )
@@ -373,8 +374,6 @@ async def confirm_order(message: types.Message, state: FSMContext):
     # Remove the InlineKeyboardMarkup
     await bot.send_message(message.from_user.id, "Ваш заказ подтвержден. Спасибо за заказ!",
                            reply_markup=ReplyKeyboardRemove())
-
-
 
 
 # Function to generate a unique order identifier
@@ -441,10 +440,11 @@ async def success(message: types.Message, state: FSMContext):
 
         # Prepare the order confirmation message
         order_confirmation_message = (
-            f"Ваш заказ подтвержден:\n"
+            f"Заказ успешно оплачен:\n"
             f"Заказчик: {user_name}\n"
             f"Телефон: {user_telephone}\n"
             f"Адрес: {user_add}\n\n"
+            f"Номер заказа: {order_number}\n"
             f"{cart_summary}\n"
             "Спасибо за заказ!"
         )
