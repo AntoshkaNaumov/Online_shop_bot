@@ -183,6 +183,7 @@ async def mailing_list_download(message: types.Message):
         # Retrieve a list of group members
         try:
             members = await bot.get_chat_members(chat_id)
+            print(members)
         except Exception as e:
             await message.answer("Failed to retrieve group members. Please try again later.")
             return
