@@ -8,4 +8,4 @@ button_loading = KeyboardButton('/Загрузка')
 
 
 button_case_admin = ReplyKeyboardMarkup(resize_keyboard=True).add(button_load)\
-    .add(button_delete).add(button_orders)
+    .add(button_delete).add(button_orders).add(button_loading)
