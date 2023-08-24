@@ -174,38 +174,51 @@ async def process_order_number(message: types.Message, state: FSMContext):
         await message.answer("У вас нет прав для выполнения этой команды.")
 
 
-@dp.message_handler(commands='Загрузка')
-async def mailing_list_download(message: types.Message):
+class MailingState(StatesGroup):
+    WaitingForMessage = State()
+
+@dp.message_handler(commands='Рассылка')
+async def start_mailing(message: types.Message):
     if message.from_user.id == ID:
-        # Connect to the SQLite database
-        conn = sqlite3.connect('users.sql')
-        cur = conn.cursor()
-
-        # Retrieve user IDs from the database
-        try:
-            cur.execute('SELECT user_id FROM users')
-            user_ids = [row[0] for row in cur.fetchall()]
-        except Exception as e:
-            await message.answer("Failed to retrieve user IDs from the database. Please try again later.")
-            return
-        finally:
-            # Close the database connection
-            conn.close()
-
-        # Message content that you want to send
-        message_content = "Hello, this is an important update for our users."
-
-        # Loop through user IDs and send the message
-        for user_id in user_ids:
-            try:
-                await bot.send_message(user_id, message_content)
-            except Exception as e:
-                # Handle any exceptions that might occur while sending messages
-                print(f"Failed to send message to user {user_id}: {e}")
-
-        await message.answer("Message sent to the users in the mailing list.")
+        await MailingState.WaitingForMessage.set()
+        await message.answer("Please enter the message you want to send to users.")
     else:
         await message.answer("You do not have the necessary permissions for this command.")
+
+
+@dp.message_handler(state=MailingState.WaitingForMessage)
+async def get_message_content(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['message_content'] = message.text
+
+    await state.finish()
+    await send_message_to_users(data['message_content'])
+
+
+async def send_message_to_users(message_content):
+    # Connect to the SQLite database
+    conn = sqlite3.connect('users.sql')
+    cur = conn.cursor()
+
+    # Retrieve user IDs from the database
+    try:
+        cur.execute('SELECT user_id FROM users')
+        user_ids = [row[0] for row in cur.fetchall()]
+    except Exception as e:
+        print("Failed to retrieve user IDs from the database.")
+        return
+    finally:
+        # Close the database connection
+        conn.close()
+
+    # Loop through user IDs and send the message
+    for user_id in user_ids:
+        try:
+            await bot.send_message(user_id, message_content)
+        except Exception as e:
+            print(f"Failed to send message to user {user_id}: {e}")
+
+    print("Message sent to the users in the mailing list.")
 
 
 # Регистрирует хендлеры
@@ -220,3 +233,5 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(make_changes_command, commands=['moderator'], is_chat_admin=True)
     dp.register_message_handler(start_mark_delivered, commands='mark_delivered')
     dp.register_message_handler(process_order_number, state=MarkDelivered.waiting_for_order_number)
+    dp.register_message_handler(start_mailing, commands='Рассылка')
+    dp.register_message_handler(get_message_content, state=MailingState.WaitingForMessage)
