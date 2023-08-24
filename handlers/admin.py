@@ -174,6 +174,37 @@ async def process_order_number(message: types.Message, state: FSMContext):
         await message.answer("У вас нет прав для выполнения этой команды.")
 
 
+@dp.message_handler(commands='Загрузка')
+async def mailing_list_download(message: types.Message):
+    if message.from_user.id == ID:
+        # Get the chat ID of the group
+        chat_id = message.chat.id
+
+        # Retrieve a list of group members
+        try:
+            members = await bot.get_chat_members(chat_id)
+        except Exception as e:
+            await message.answer("Failed to retrieve group members. Please try again later.")
+            return
+
+        # Message content that you want to send
+        message_content = "Hello group members, this is an important update."
+
+        # Loop through group members and send the message
+        for member in members:
+            user_id = member.user.id
+            try:
+                await bot.send_message(user_id, message_content)
+            except Exception as e:
+                # Handle any exceptions that might occur while sending messages
+                print(f"Failed to send message to user {user_id}: {e}")
+
+        await message.answer("Message sent to the group members.")
+    else:
+        await message.answer("You do not have the necessary permissions for this command.")
+
+
+
 # Регистрирует хендлеры
 def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(cm_start, commands=['Загрузить'], state=None)
