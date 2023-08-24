@@ -177,33 +177,35 @@ async def process_order_number(message: types.Message, state: FSMContext):
 @dp.message_handler(commands='Загрузка')
 async def mailing_list_download(message: types.Message):
     if message.from_user.id == ID:
-        # Get the chat ID of the group
-        chat_id = message.chat.id
+        # Connect to the SQLite database
+        conn = sqlite3.connect('users.sql')
+        cur = conn.cursor()
 
-        # Retrieve a list of group members
+        # Retrieve user IDs from the database
         try:
-            members = await bot.get_chat_members(chat_id)
-            print(members)
+            cur.execute('SELECT user_id FROM users')
+            user_ids = [row[0] for row in cur.fetchall()]
         except Exception as e:
-            await message.answer("Failed to retrieve group members. Please try again later.")
+            await message.answer("Failed to retrieve user IDs from the database. Please try again later.")
             return
+        finally:
+            # Close the database connection
+            conn.close()
 
         # Message content that you want to send
-        message_content = "Hello group members, this is an important update."
+        message_content = "Hello, this is an important update for our users."
 
-        # Loop through group members and send the message
-        for member in members:
-            user_id = member.user.id
+        # Loop through user IDs and send the message
+        for user_id in user_ids:
             try:
                 await bot.send_message(user_id, message_content)
             except Exception as e:
                 # Handle any exceptions that might occur while sending messages
                 print(f"Failed to send message to user {user_id}: {e}")
 
-        await message.answer("Message sent to the group members.")
+        await message.answer("Message sent to the users in the mailing list.")
     else:
         await message.answer("You do not have the necessary permissions for this command.")
-
 
 
 # Регистрирует хендлеры
