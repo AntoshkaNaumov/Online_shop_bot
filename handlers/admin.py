@@ -176,6 +176,7 @@ async def process_order_number(message: types.Message, state: FSMContext):
 
 class MailingState(StatesGroup):
     WaitingForMessage = State()
+    WaitingForImage = State()
 
 @dp.message_handler(commands='Рассылка')
 async def start_mailing(message: types.Message):
@@ -185,17 +186,23 @@ async def start_mailing(message: types.Message):
     else:
         await message.answer("You do not have the necessary permissions for this command.")
 
-
 @dp.message_handler(state=MailingState.WaitingForMessage)
 async def get_message_content(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['message_content'] = message.text
 
+    await MailingState.WaitingForImage.set()
+    await message.answer("Now, please upload an image to include in the message.")
+
+@dp.message_handler(content_types=types.ContentType.PHOTO, state=MailingState.WaitingForImage)
+async def get_image(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['image_file_id'] = message.photo[-1].file_id
+
     await state.finish()
-    await send_message_to_users(data['message_content'])
+    await send_message_with_image_to_users(data['message_content'], data['image_file_id'])
 
-
-async def send_message_to_users(message_content):
+async def send_message_with_image_to_users(message_content, image_file_id):
     # Connect to the SQLite database
     conn = sqlite3.connect('users.sql')
     cur = conn.cursor()
@@ -211,14 +218,17 @@ async def send_message_to_users(message_content):
         # Close the database connection
         conn.close()
 
-    # Loop through user IDs and send the message
+    # Loop through user IDs and send the message with image
     for user_id in user_ids:
         try:
-            await bot.send_message(user_id, message_content)
+            await bot.send_photo(user_id, photo=image_file_id, caption=message_content)
         except Exception as e:
-            print(f"Failed to send message to user {user_id}: {e}")
+            print(f"Failed to send message with image to user {user_id}: {e}")
 
-    print("Message sent to the users in the mailing list.")
+    print("Message with image sent to the users in the mailing list.")
+
+
+
 
 
 # Регистрирует хендлеры
@@ -233,5 +243,7 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(make_changes_command, commands=['moderator'], is_chat_admin=True)
     dp.register_message_handler(start_mark_delivered, commands='mark_delivered')
     dp.register_message_handler(process_order_number, state=MarkDelivered.waiting_for_order_number)
+    # Register the conversation handlers
     dp.register_message_handler(start_mailing, commands='Рассылка')
     dp.register_message_handler(get_message_content, state=MailingState.WaitingForMessage)
+    dp.register_message_handler(get_image, content_types=types.ContentType.PHOTO, state=MailingState.WaitingForImage)
