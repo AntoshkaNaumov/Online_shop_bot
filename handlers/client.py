@@ -12,7 +12,7 @@ from aiogram.types import (
 from aiogram.types import LabeledPrice
 from aiogram.types import ReplyKeyboardRemove
 from data_base import sqlite_db
-from config import PAYMENT_TOKEN, GROUP_ADMIN_ID
+from config import PAYMENT_TOKEN, GROUP_ADMIN_ID, secret_key
 import sqlite3
 import time
 import os
@@ -404,7 +404,7 @@ async def process_payment(callback_query: types.CallbackQuery, state: FSMContext
             title=f'Покупка товара - {product_name}',
             description="Оплата за покупку в нашем магазине",
             payload=f'buy_product {product_name}',
-            provider_token=PAYMENT_TOKEN,
+            provider_token=secret_key,
             currency='RUB',
             prices=[LabeledPrice(label=product_name, amount=int(total_price) * 100)],
             start_parameter='buy_product',
@@ -552,7 +552,7 @@ async def buy_product(callback_query: types.CallbackQuery):
                                title=f'Покупка товара - {name}',
                                description=description,
                                payload='buy_product',
-                               provider_token=PAYMENT_TOKEN,
+                               provider_token=secret_key,
                                currency='RUB',
                                prices=[types.LabeledPrice(label=name, amount=price_in_rubles)],
                                start_parameter='buy_product',  # Unique parameter for deep linking
