@@ -24,11 +24,11 @@ async def sql_add_command(state):
         base.commit()
 
 
-async def sql_read():
-    products = []
+async def sql_read(message):
+    #products = []
     for ret in cur.execute('SELECT * FROM shop').fetchall():
-        products.append(ret)
-    return products
+        await bot.send_photo(message.from_user.id, ret[0], f'{ret[1]}\nОписание: {ret[2]}\nЦена {ret[-1]}')
+    #return products
 
 
 async def sql_read2():
@@ -47,9 +47,3 @@ async def get_product_by_name(product_name):
         if name == product_name:
             return product
     return None
-
-
-async def read_all_orders():
-    # Выполнение SQL-запроса
-    return cur.execute("SELECT * FROM orders WHERE status = 'подтвержден'")
-
