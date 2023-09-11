@@ -120,21 +120,30 @@ async def shop_menu_command(message: types.Message):
     # Retrieve products from the database using the sql_read function
     products = await sqlite_db.sql_read(message)
 
-    # Create an InlineKeyboardMarkup with "Купить" and "В корзину" buttons
-    keyboard = types.InlineKeyboardMarkup()
-    buy_button = types.InlineKeyboardButton(text="Купить", callback_data="buy")
-    add_to_cart_button = types.InlineKeyboardButton(text="В корзину", callback_data="add_to_cart")
+    for product in products:
+        photo, name, description, price = product
 
-    # Add the buttons to the keyboard
-    keyboard.add(buy_button, add_to_cart_button)
+        # Create a string to display the product details
+        product_info = f"Название: {name}\nОписание: {description}\nЦена, руб.: {price}"
 
-    # Send the product photo along with the product details and the buttons
-    await message.reply("Выберите действие:", reply_markup=keyboard)
+        # Create an InlineKeyboardMarkup to hold the buttons for each product
+        keyboard = InlineKeyboardMarkup()
+
+        # Add "Купить" button
+        buy_button = InlineKeyboardButton('Купить', callback_data=f"купить_{name}")
+        keyboard.row(buy_button)
+
+        # Add "В корзину" button
+        add_to_cart_button = InlineKeyboardButton('В корзину', callback_data=f"в_корзину_{name}")
+        keyboard.row(add_to_cart_button)
+
+        # Send the product photo along with the product details and the buttons
+        await bot.send_photo(message.chat.id, photo, caption=product_info, reply_markup=keyboard)
 
 
-@dp.callback_query_handler(lambda query: query.data == "add_to_cart")
+@dp.callback_query_handler(lambda query: query.data.startswith('в_корзину_'))
 async def add_to_cart(callback_query: types.CallbackQuery, state: FSMContext):
-    product_name = callback_query.message.text.split('\n')[0].split(': ')[1]  # Extract the product name from the message text
+    product_name = callback_query.data[10:]  # Extract the product name from the callback data
 
     async with state.proxy() as data:
         user_cart = data.get("user_cart", {})
