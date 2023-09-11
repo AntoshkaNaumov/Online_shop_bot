@@ -116,9 +116,10 @@ async def pay_information(message: types.Message):
         'ЮMoney, Qiwi, Visa, Master Card, МИР, мобильная коммерция и другие.')
 
 
+@dp.message_handler(commands=['Каталог'])
 async def shop_menu_command(message: types.Message):
     # Retrieve products from the database using the sql_read function
-    products = await sqlite_db.sql_read(message)
+    products = await sqlite_db.sql_read()
 
     for product in products:
         photo, name, description, price = product
