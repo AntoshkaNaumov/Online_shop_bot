@@ -116,10 +116,13 @@ async def pay_information(message: types.Message):
         'ЮMoney, Qiwi, Visa, Master Card, МИР, мобильная коммерция и другие.')
 
 
-# dp.message_handler(commands=['Каталог'])
 async def shop_menu_command(message: types.Message):
     # Retrieve products from the database using the sql_read function
     products = await sqlite_db.sql_read()
+
+    max_message_length = 4096  # Максимальная длина сообщения Telegram
+
+    product_batches = []  # Список, в котором будут храниться товары для каждого сообщения
 
     for product in products:
         photo, name, description, price = product
@@ -140,6 +143,21 @@ async def shop_menu_command(message: types.Message):
 
         # Send the product photo along with the product details and the buttons
         await bot.send_photo(message.chat.id, photo, caption=product_info, reply_markup=keyboard)
+
+        # Calculate the total length of the message
+        total_length = len(product_info) + len(keyboard.to_json())
+
+        # Check if adding this product to the current batch exceeds the message length limit
+        if total_length + len(product_batches[-1]) > max_message_length:
+            # If it does, start a new batch for the next message
+            product_batches.append("")
+
+        # Add the current product to the current batch
+        product_batches[-1] += product_info + "\n\n"
+
+    # Send the product batches as separate messages
+    for batch in product_batches:
+        await bot.send_message(message.chat.id, batch)
 
 
 @dp.callback_query_handler(lambda query: query.data.startswith('в_корзину_'))
