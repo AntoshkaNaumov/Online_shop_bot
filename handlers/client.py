@@ -116,9 +116,16 @@ async def pay_information(message: types.Message):
         'ЮMoney, Qiwi, Visa, Master Card, МИР, мобильная коммерция и другие.')
 
 
+import asyncio
+
 async def shop_menu_command(message: types.Message):
     # Retrieve products from the database using the sql_read function
     products = await sqlite_db.sql_read()
+
+    if not products:
+        # Если каталог товаров пуст, выводим сообщение об этом
+        await bot.send_message(message.chat.id, "Каталог товаров пуст.")
+        return
 
     for product in products:
         photo, name, description, price = product
@@ -139,6 +146,9 @@ async def shop_menu_command(message: types.Message):
 
         # Send the product photo along with the product details and the buttons
         await bot.send_photo(message.chat.id, photo, caption=product_info, reply_markup=keyboard)
+
+        # Пауза в 30 секунд перед отправкой следующего товара
+        await asyncio.sleep(30)
 
 
 @dp.callback_query_handler(lambda query: query.data.startswith('в_корзину_'))
