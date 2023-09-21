@@ -118,61 +118,53 @@ async def pay_information(message: types.Message):
 
 import asyncio
 
-async def shop_menu_command(message: types.Message):
+async def shop_menu_command(message: types.Message, current_page: int = 1):
     # Retrieve products from the database using the sql_read function
     products = await sqlite_db.sql_read()
 
     # Параметры пагинации
     page_size = 5
     total_pages = (len(products) + page_size - 1) // page_size  # Определение общего количества страниц
-    current_page = 1  # Начнем с первой страницы
 
-    while current_page <= total_pages:
-        start_index = (current_page - 1) * page_size
-        end_index = start_index + page_size
-        page_products = products[start_index:end_index]
+    start_index = (current_page - 1) * page_size
+    end_index = start_index + page_size
+    page_products = products[start_index:end_index]
 
-        for product in page_products:
-            photo, name, description, price = product
+    for product in page_products:
+        photo, name, description, price = product
 
-            # Create a string to display the product details
-            product_info = f"Название: {name}\nОписание: {description}\nЦена, руб.: {price}"
+        # Create a string to display the product details
+        product_info = f"Название: {name}\nОписание: {description}\nЦена, руб.: {price}"
 
-            # Create an InlineKeyboardMarkup to hold the buttons for each product
-            keyboard = InlineKeyboardMarkup()
+        # Create an InlineKeyboardMarkup to hold the buttons for each product
+        keyboard = InlineKeyboardMarkup()
 
-            # Add "Купить" button
-            buy_button = InlineKeyboardButton('Купить', callback_data=f"купить_{name}")
-            keyboard.row(buy_button)
+        # Add "Купить" button
+        buy_button = InlineKeyboardButton('Купить', callback_data=f"купить_{name}")
+        keyboard.row(buy_button)
 
-            # Add "В корзину" button
-            add_to_cart_button = InlineKeyboardButton('В корзину', callback_data=f"в_корзину_{name}")
-            keyboard.row(add_to_cart_button)
+        # Add "В корзину" button
+        add_to_cart_button = InlineKeyboardButton('В корзину', callback_data=f"в_корзину_{name}")
+        keyboard.row(add_to_cart_button)
 
-            # Send the product photo along with the product details and the buttons
-            await bot.send_photo(message.chat.id, photo, caption=product_info, reply_markup=keyboard)
+        # Send the product photo along with the product details and the buttons
+        await bot.send_photo(message.chat.id, photo, caption=product_info, reply_markup=keyboard)
 
-            await asyncio.sleep(5)
+        await asyncio.sleep(5)
 
-        # Если есть следующая страница, добавьте кнопку для переключения на нее
-        if current_page < total_pages:
-            markup = InlineKeyboardMarkup()
-            next_page_button = InlineKeyboardButton('Следующая страница', callback_data=f"next_page_{current_page + 1}")
-            markup.add(next_page_button)
-            await bot.send_message(message.chat.id, "Выберите действие:", reply_markup=markup)
-
-        current_page += 1
+    # Если есть следующая страница, добавьте кнопку для переключения на нее
+    if current_page < total_pages:
+        markup = InlineKeyboardMarkup()
+        next_page_button = InlineKeyboardButton('Следующая страница', callback_data=f"next_page_{current_page + 1}")
+        markup.add(next_page_button)
+        await bot.send_message(message.chat.id, "Выберите действие:", reply_markup=markup)
 
 
-@dp.callback_query_handler(lambda query: query.data.startswith('next_page_'))
-async def next_page(callback_query: types.CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(lambda callback_query: callback_query.data.startswith('next_page_'))
+async def next_page_callback(callback_query: types.CallbackQuery):
     current_page = int(callback_query.data.split('_')[2])
-
-    # Обновите сообщение с новой страницей товаров
     await shop_menu_command(callback_query.message, current_page)
 
-    # Ответьте на запрос обратного вызова
-    await bot.answer_callback_query(callback_query.id)
 
 
 @dp.callback_query_handler(lambda query: query.data.startswith('в_корзину_'))
